@@ -3,16 +3,13 @@ parseString = require('xml2js').parseString
 _ = require 'underscore'
 
 exports.request = (query, say) ->
-  requestingWolfram = true
   request "http://api.wolframalpha.com/v2/query?input=#{encodeURIComponent(query)}&appid=AQLTXA-LU46J2XQ92", (error, response, body) ->
-    requestingWolfram = false
     if !error and response.statusCode == 200
       # Convert XML response to json
       parseString body, (error, result) ->
         if result.queryresult.didyoumeans?
           newQuery = result.queryresult.didyoumeans[0].didyoumean[0]._
           say "Did you mean #{newQuery}?"
-          #requestWolfram(newQuery)
         else
           if result.queryresult.pod?
             for pod, i in result.queryresult.pod

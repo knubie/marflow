@@ -2,7 +2,7 @@ irc = require 'irc'
 insult = require './insult'
 wolfram = require './wolfram'
 
-CHANNEL = '##test123'
+CHANNEL = '##the_basement'
 
 requestingWolfram = false
 
@@ -22,8 +22,6 @@ bot.addListener 'message', (from, to, text, message) ->
     bot.say CHANNEL, insult.make(nick[1])
   # Listen for messages that begin with a question mark.
   if /^[?](.*)$/.test text
-    # Construct the Wolfram|Alpha query by removing the initial
-    # question mark and any whitespace.
     if requestingWolfram == true
       bot.say CHANNEL, 'One at a time, please.'
     else
