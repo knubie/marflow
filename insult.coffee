@@ -14,11 +14,10 @@ exports.make = (insultee) ->
   return "#{insultee} is a #{random 'adjective'}, #{random 'adjective'} #{random 'noun'}, who #{random 'verb'} #{random 'nounverb'}."
 
 exports.add = (category, word, cb) ->
-  console.log 'function starting'
-  fs.appendFile "#{category}s.txt", "#{word}\n", (error) ->
-    throw error if error
-    console.log words
-    if words[category].indexOf word is -1
-      words[category].push word
-      cb()
-
+  if words[category].indexOf word is -1
+    words[category].push word
+    fs.appendFile "#{category}s.txt", "#{word}\n", (error) ->
+      throw error if error
+      cb "Added #{word} to insult #{category}s."
+  else
+    cb 'Already in list.'
