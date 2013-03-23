@@ -1,44 +1,17 @@
 irc = require 'irc'
-fs = require 'fs'
 request = require 'request'
 parseString = require('xml2js').parseString
 _ = require('underscore')
+insult = require('./insult')
 
-CHANNEL = '##the_basement'
-ADJECTIVES = []
-fs.readFile 'adjectives.txt', 'utf8', (error, data) ->
-  ADJECTIVES = data.split('\n')
-  ADJECTIVES.pop()
-NOUNS = []
-fs.readFile 'nouns.txt', 'utf8', (error, data) ->
-  NOUNS = data.split('\n')
-  NOUNS.pop()
+CHANNEL = '##test123'
 
-VERBS = []
-fs.readFile 'verbs.txt', 'utf8', (error, data) ->
-  VERBS = data.split('\n')
-  VERBS.pop()
-
-NOUNVERBS = []
-fs.readFile 'nounverbs.txt', 'utf8', (error, data) ->
-  NOUNVERBS = data.split('\n')
-  NOUNVERBS.pop()
-
-setInsult = ->
-  insult = ""
-  for i in [1..2]
-    adjSpot = Math.floor(Math.random()*ADJECTIVES.length)
-    insult = insult + ADJECTIVES[adjSpot] + ' '
-  nounSpot = Math.floor(Math.random()*NOUNS.length)
-  insult = insult + NOUNS[nounSpot]
-  verbSpot = Math.floor(Math.random()*VERBS.length)
-  insult = insult + " who " + VERBS[verbSpot]
-  nounverbSpot = Math.floor(Math.random()*NOUNVERBS.length)
-  insult = insult + " " + NOUNVERBS[nounverbSpot] + '.'
-  return insult
+requestingWolfram = false
 
 requestWolfram = (query) ->
+  requestingWolfram = true
   request "http://api.wolframalpha.com/v2/query?input=#{encodeURIComponent(query)}&appid=AQLTXA-LU46J2XQ92", (error, response, body) ->
+    requestingWolfram = false
     if !error and response.statusCode == 200
       # Convert XML response to json
       parseString body, (error, result) ->
@@ -50,9 +23,9 @@ requestWolfram = (query) ->
             for pod, i in result.queryresult.pod
               unless i is 0 or _.isEmpty pod.subpod[0].plaintext[0]
                 if typeof(pod.subpod[0].plaintext) is "object"
-                  bot.say CHANNEL, pod.subpod[0].plaintext[0]
+                  bot.say CHANNEL, pod.subpod[0].plaintext[0].replace(/\s+\|/g, ':').replace(/\n/g, ' | ')
                 else
-                  bot.say CHANNEL, pod.subpod[0].plaintext
+                  bot.say CHANNEL, pod.subpod[0].plaintext.replace(/\s+\|/g, ':').replace(/\n/g, ' | ')
                 break
           else
             bot.say CHANNEL, "I don't know."
@@ -63,39 +36,20 @@ bot = new irc.Client 'irc.freenode.net', 'Marflow',
 bot.addListener 'message', (from, to, text, message) ->
   # Listen for insult add
   if /^[!]\s*add\s+insult\s+(\S*)\s+(\S*)$/.test text
-    command = /^[!]\s*add\s+insult\s+(\w*)\s+(\S*)$/.exec text
-    if command[1] is 'adjective'
-      fs.appendFile 'adjectives.txt', "#{command[2]}\n", (error) ->
-        if ADJECTIVES.indexOf command[2] is -1
-          ADJECTIVES.push command[2]
-          bot.say CHANNEL, "Added #{command[2]} to insult adjectives."
-          throw error if error
-    if command[1] is 'noun'
-      fs.appendFile 'nouns.txt', "#{command[2]}\n", (error) ->
-        if NOUNS.indexOf command[2] is -1
-          NOUNS.push command[2]
-          bot.say CHANNEL, "Added #{command[2]} to insult nouns."
-          throw error if error
-    if command[1] is 'verb'
-      fs.appendFile 'verbs.txt', "#{command[2]}\n", (error) ->
-        if VERBS.indexOf command[2] is -1
-          VERBS.push command[2]
-          bot.say CHANNEL, "Added #{command[2]} to insult verbs."
-          throw error if error
-    if command[1] is 'nounverb'
-      fs.appendFile 'nounverbs.txt', "#{command[2]}\n", (error) ->
-        if NOUNVERBS.indexOf command[2] is -1
-          NOUNVERBS.push command[2]
-          bot.say CHANNEL, "Added #{command[2]} to insult nounverbs."
-          throw error if error
-    
+    message = /^[!]\s*add\s+insult\s+(\w*)\s+(\S*)$/.exec text
+    if message[1] is 'adjective' or message[1] is 'noun' or message[1] is 'verb' or message[1] is 'nounverb'
+      insult.add message[1], message[2], ->
+        bot.say CHANNEL, "Added #{message[2]} to insult #{message[1]}."
   # Listen for insult
   if /^[!]\s*insult\s+(\S+)$/.test text
     nick = /^[!]\s*insult\s+(\S+)$/.exec text
-    bot.say CHANNEL, nick[1] + " is a " + setInsult()
+    bot.say CHANNEL, insult.make(nick[1])
   # Listen for messages that begin with a question mark.
   if /^[?](.*)$/.test text
     # Construct the Wolfram|Alpha query by removing the initial
     # question mark and any whitespace.
-    query = text.replace /^[?]\s*/g, ''
-    requestWolfram query
+    if requestingWolfram == true
+      bot.say CHANNEL, 'One at a time, please.'
+    else
+      query = text.replace /^[?]\s*/g, ''
+      requestWolfram query
