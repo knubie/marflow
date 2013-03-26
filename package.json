@@ -1,8 +1,8 @@
 {
-  name: 'Marflow',
-  version: '1.0',
-  engines: {
-    node: '0.8.x',
-    npm: '1.2.x'
+  'name': 'Marflow',
+  'version': '1.0',
+  'engines': {
+    'node': '0.8.x',
+    'npm': '1.2.x'
   }
 }
