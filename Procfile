@@ -1,1 +1,1 @@
-bot: coffee bot.coffee
+app: coffee bot.coffee
