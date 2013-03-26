@@ -1,6 +1,14 @@
 fs = require 'fs'
+#mongoose = require 'mongoose'
+#Schema = mongoose.Schema
 
 words = {}
+
+#exports.wordsSchema = new Schema
+  #adjective: []
+  #noun: []
+  #verb: []
+  #nounverb: []
 
 for group in ['adjective', 'noun', 'verb', 'nounverb']
   words[group] = fs.readFileSync("#{group}s.txt", 'utf8').split('\n')
@@ -14,10 +22,9 @@ exports.make = (insultee) ->
   return "#{insultee} is a #{random 'adjective'} #{random 'adjective'} #{random 'noun'}, who #{random 'verb'} #{random 'nounverb'}."
 
 exports.add = (category, word, cb) ->
-  if words[category].indexOf word is -1
+  if words[category].indexOf word is -1 # Check if word exists in array.
     words[category].push word
-    fs.appendFile "#{category}s.txt", "#{word}\n", (error) ->
-      throw error if error
+    fs.appendFile "#{category}s.txt", "#{word}\n", ->
       cb "Added #{word} to insult #{category}s."
   else
     cb 'Already in list.'
