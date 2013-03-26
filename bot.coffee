@@ -1,3 +1,4 @@
+require 'coffee-script'
 irc = require 'irc'
 #mongoose = require 'mongoose'
 #insult = require './insult'
