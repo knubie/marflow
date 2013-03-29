@@ -15,7 +15,10 @@ channels = ['##the_basement']
 bot = new irc.Client 'irc.freenode.net', 'Marflow',
   channels: channels
 
-bot.addListener 'message', (from, to, text, message) ->
+bot.addListener 'pm', (from, to, text, message) ->
+  bot.say channels[0], "#{from} is being sneaky!"
+
+bot.addListener 'message##the_basement', (from, to, text, message) ->
   regexs =
     addInsult: /^[!]\s*add\s+insult\s+(\w*)\s+(\S*)$/
     insult: /^[!]\s*insult\s+(\S+)$/
